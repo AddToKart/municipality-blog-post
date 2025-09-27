@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Save, X, Eye, Upload, Tag } from "lucide-react";
+import { Save, X, Eye, Upload, Tag, FileText } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { RichTextEditor } from "../ui/RichTextEditor";
+import { DocumentUploader } from "../ui/DocumentUploader";
 
 interface Post {
   id: number;
@@ -325,35 +327,75 @@ export const AdminPostForm: React.FC<AdminPostFormProps> = ({
           {/* Content */}
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4">Content</h2>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Excerpt
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Post Summary (Excerpt)
+                  <span className="text-xs text-gray-500 font-normal ml-2">
+                    • Optional - Leave blank to auto-generate
+                  </span>
                 </label>
                 <Textarea
                   value={formData.excerpt}
                   onChange={(e) => handleChange("excerpt", e.target.value)}
-                  placeholder="Brief description of the post..."
+                  placeholder="Write 1-2 sentences summarizing this post... (If left empty, we'll automatically create one from your content)"
                   rows={3}
+                  className="mt-1"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Recommended: 150-200 characters • Current:{" "}
+                  {formData.excerpt.length} characters
+                  {formData.excerpt.length > 200 && (
+                    <span className="text-amber-600 font-medium">
+                      {" "}
+                      (Consider shortening for better display)
+                    </span>
+                  )}
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Content *
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Main Post Content *
+                  <span className="text-xs text-gray-500 font-normal ml-2">
+                    • This is what citizens will read in full
+                  </span>
                 </label>
-                <Textarea
-                  value={formData.content}
-                  onChange={(e) => handleChange("content", e.target.value)}
-                  placeholder="Write your post content here..."
-                  rows={12}
-                  className={errors.content ? "border-red-500" : ""}
-                />
+                <div className={errors.content ? "border-red-500 rounded" : ""}>
+                  <RichTextEditor
+                    value={formData.content}
+                    onChange={(content) => handleChange("content", content)}
+                    placeholder="Start writing your post content here... Use the toolbar above to format text, add images, create lists, and more!"
+                  />
+                </div>
                 {errors.content && (
                   <p className="text-red-500 text-sm mt-1">{errors.content}</p>
                 )}
               </div>
             </div>
+          </Card>
+
+          {/* Document Attachments */}
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <FileText className="w-5 h-5 mr-2" />
+              Document Attachments
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Upload documents that citizens can download (PDF, DOC, DOCX, XLS,
+              XLSX, PPT, PPTX, TXT, RTF)
+            </p>
+            <DocumentUploader
+              onDocumentInsert={(url, filename) => {
+                // Insert document link into the rich text editor
+                const linkHtml = `<p><a href="${url}" target="_blank" style="color: #2563eb; text-decoration: underline;">📎 ${filename}</a></p>`;
+                setFormData((prev) => ({
+                  ...prev,
+                  content: prev.content + linkHtml,
+                }));
+              }}
+              maxFiles={5}
+            />
           </Card>
 
           {/* Tags */}

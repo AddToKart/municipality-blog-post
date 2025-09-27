@@ -1,33 +1,45 @@
-import express, { Request, Response } from "express";
-import { ApiResponse } from "@/types";
+import express from "express";
+import {
+  uploadImage,
+  uploadMultipleImages,
+  uploadDocument,
+  deleteImage,
+  singleImageUpload,
+  multipleImageUpload,
+  singleDocumentUpload,
+  multipleDocumentUpload,
+} from "@/controllers/uploadController";
+import { authenticate, requireAdmin } from "@/middleware/auth";
 
 const router = express.Router();
 
-// POST /api/upload - Upload file (admin only)
-router.post("/", async (_req: Request, res: Response) => {
-  const response: ApiResponse = {
-    success: false,
-    error: "Upload endpoints not yet implemented",
-  };
-  res.status(501).json(response);
-});
+// Image upload routes
+router.post(
+  "/image",
+  authenticate,
+  requireAdmin,
+  singleImageUpload,
+  uploadImage
+);
+router.post(
+  "/images",
+  authenticate,
+  requireAdmin,
+  multipleImageUpload,
+  uploadMultipleImages
+);
 
-// GET /api/upload - List uploaded files (admin only)
-router.get("/", async (_req: Request, res: Response) => {
-  const response: ApiResponse = {
-    success: false,
-    error: "Upload endpoints not yet implemented",
-  };
-  res.status(501).json(response);
-});
+// Document upload routes
+router.post(
+  "/document",
+  authenticate,
+  requireAdmin,
+  singleDocumentUpload,
+  uploadDocument
+);
 
-// DELETE /api/upload/:id - Delete uploaded file (admin only)
-router.delete("/:id", async (_req: Request, res: Response) => {
-  const response: ApiResponse = {
-    success: false,
-    error: "Upload endpoints not yet implemented",
-  };
-  res.status(501).json(response);
-});
+// Delete routes (works for both images and documents)
+router.delete("/image/:filename", authenticate, requireAdmin, deleteImage);
+router.delete("/document/:filename", authenticate, requireAdmin, deleteImage);
 
 export default router;

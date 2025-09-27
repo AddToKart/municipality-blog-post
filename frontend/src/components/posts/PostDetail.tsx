@@ -1,25 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, 
-  User, 
-  Eye, 
-  Clock, 
-  Tag, 
-  Share2, 
+import React, { useState, useEffect } from "react";
+import "react-quill/dist/quill.snow.css";
+import {
+  Calendar,
+  User,
+  Eye,
+  Clock,
+  Tag,
+  Share2,
   Printer,
   ThumbsUp,
   Heart,
   HelpCircle,
   MessageSquare,
-  ArrowLeft
-} from 'lucide-react';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Card } from '../ui/card';
-import { Post, Comment, ReactionCounts } from '../../types';
-import { formatDate, getReadingTime, sharePost } from '../../lib/utils';
-import { api } from '../../lib/api';
-import { CommentSection } from './CommentSection';
+  ArrowLeft,
+} from "lucide-react";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Card } from "../ui/card";
+import { Post, Comment, ReactionCounts } from "../../types";
+import { formatDate, getReadingTime, sharePost } from "../../lib/utils";
+import { api } from "../../lib/api";
+import { CommentSection } from "./CommentSection";
 
 interface PostDetailProps {
   post: Post;
@@ -31,7 +32,7 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
   const [reactions, setReactions] = useState<ReactionCounts>({
     like: post.like_count,
     love: post.love_count,
-    helpful: post.helpful_count
+    helpful: post.helpful_count,
   });
   const [userReaction, setUserReaction] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,7 +47,7 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
       const postComments = await api.getComments(post.id);
       setComments(postComments);
     } catch (error) {
-      console.error('Failed to load comments:', error);
+      console.error("Failed to load comments:", error);
     }
   };
 
@@ -55,20 +56,20 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
       const counts = await api.getReactionCounts(post.id);
       setReactions(counts);
     } catch (error) {
-      console.error('Failed to load reactions:', error);
+      console.error("Failed to load reactions:", error);
     }
   };
 
-  const handleReaction = async (reactionType: 'like' | 'love' | 'helpful') => {
+  const handleReaction = async (reactionType: "like" | "love" | "helpful") => {
     if (loading) return;
-    
+
     setLoading(true);
     try {
       const newCounts = await api.addReaction(post.id, reactionType);
       setReactions(newCounts);
       setUserReaction(reactionType);
     } catch (error) {
-      console.error('Failed to add reaction:', error);
+      console.error("Failed to add reaction:", error);
     } finally {
       setLoading(false);
     }
@@ -83,26 +84,26 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
   };
 
   const reactionButtons = [
-    { 
-      type: 'like' as const, 
-      icon: ThumbsUp, 
-      label: 'Helpful', 
+    {
+      type: "like" as const,
+      icon: ThumbsUp,
+      label: "Helpful",
       count: reactions.like,
-      color: 'text-blue-600'
+      color: "text-blue-600",
     },
-    { 
-      type: 'love' as const, 
-      icon: Heart, 
-      label: 'Love', 
+    {
+      type: "love" as const,
+      icon: Heart,
+      label: "Love",
       count: reactions.love,
-      color: 'text-red-600'
+      color: "text-red-600",
     },
-    { 
-      type: 'helpful' as const, 
-      icon: HelpCircle, 
-      label: 'Informative', 
+    {
+      type: "helpful" as const,
+      icon: HelpCircle,
+      label: "Informative",
       count: reactions.helpful,
-      color: 'text-green-600'
+      color: "text-green-600",
     },
   ];
 
@@ -110,11 +111,7 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Back Button */}
       {onBack && (
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          className="mb-6 -ml-2"
-        >
+        <Button variant="ghost" onClick={onBack} className="mb-6 -ml-2">
           <ArrowLeft size={16} className="mr-2" />
           Back to Posts
         </Button>
@@ -123,23 +120,25 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
       {/* Header */}
       <header className="mb-8">
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          <Badge 
-            variant={post.category === 'announcement' ? 'destructive' : 'default'}
+          <Badge
+            variant={
+              post.category === "announcement" ? "destructive" : "default"
+            }
             className="capitalize"
           >
             {post.category}
           </Badge>
-          {post.category === 'announcement' && (
+          {post.category === "announcement" && (
             <Badge variant="outline" className="text-red-600 border-red-200">
               Important Notice
             </Badge>
           )}
         </div>
-        
+
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
           {post.title}
         </h1>
-        
+
         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6">
           <div className="flex items-center gap-1">
             <Calendar size={14} />
@@ -147,7 +146,7 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
           </div>
           <div className="flex items-center gap-1">
             <User size={14} />
-            <span>{post.author_name || 'Municipal Administrator'}</span>
+            <span>{post.author_name || "Municipal Administrator"}</span>
           </div>
           <div className="flex items-center gap-1">
             <Clock size={14} />
@@ -158,7 +157,7 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
             <span>{post.view_count.toLocaleString()} views</span>
           </div>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2 mb-6">
           <Button variant="outline" size="sm" onClick={handleShare}>
@@ -185,9 +184,9 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
 
       {/* Content */}
       <div className="prose prose-lg max-w-none mb-8">
-        <div 
+        <div
           dangerouslySetInnerHTML={{ __html: post.content }}
-          className="text-gray-800 leading-relaxed"
+          className="text-gray-800 leading-relaxed rich-text-content"
         />
       </div>
 
@@ -208,7 +207,9 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
 
       {/* Reactions */}
       <Card className="mb-8 p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Was this helpful?</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          Was this helpful?
+        </h3>
         <div className="flex flex-wrap gap-3">
           {reactionButtons.map(({ type, icon: Icon, label, count, color }) => (
             <Button
@@ -217,9 +218,14 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
               size="sm"
               onClick={() => handleReaction(type)}
               disabled={loading}
-              className={`flex items-center gap-2 ${userReaction === type ? '' : 'hover:' + color}`}
+              className={`flex items-center gap-2 ${
+                userReaction === type ? "" : "hover:" + color
+              }`}
             >
-              <Icon size={16} className={userReaction === type ? 'text-white' : color} />
+              <Icon
+                size={16}
+                className={userReaction === type ? "text-white" : color}
+              />
               <span>{label}</span>
               <span className="ml-1 text-sm">({count})</span>
             </Button>
@@ -235,11 +241,13 @@ export function PostDetail({ post, onBack }: PostDetailProps) {
             Comments ({comments.length})
           </h3>
         </div>
-        
+
         <CommentSection
           postId={post.id}
           comments={comments}
-          onCommentAdded={(newComment) => setComments([...comments, newComment])}
+          onCommentAdded={(newComment) =>
+            setComments([...comments, newComment])
+          }
         />
       </div>
     </article>
