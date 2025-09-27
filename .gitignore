@@ -56,6 +56,9 @@ media/
 ehthumbs.db
 Thumbs.db
 
+# GitHub Actions and configs (if not needed)
+.github/
+
 # AI Tools Rules
 .clinerules/byterover-rules.md
 .kilocode/rules/byterover-rules.md
