@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, Calendar, TrendingUp } from 'lucide-react';
-import { Button } from '../ui/button';
-import { PostCard } from '../posts/PostCard';
-import { Post } from '../../types';
-import { api } from '../../lib/api';
+import React, { useState, useEffect } from "react";
+import { ArrowRight, Calendar, TrendingUp } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Button } from "../ui/button";
+import { PostCard } from "../posts/PostCard";
+import { Post } from "../../types";
+import { api } from "../../lib/api";
 
 interface FeaturedPostsProps {
   onPostSelect?: (post: Post) => void;
-  onViewAll?: () => void;
 }
 
-export function FeaturedPosts({ onPostSelect, onViewAll }: FeaturedPostsProps) {
+export function FeaturedPosts({ onPostSelect }: FeaturedPostsProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [announcements, setAnnouncements] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,14 +22,14 @@ export function FeaturedPosts({ onPostSelect, onViewAll }: FeaturedPostsProps) {
   const loadFeaturedContent = async () => {
     try {
       const [postsResult, announcementsResult] = await Promise.all([
-        api.getPosts(1, 3, 'post'),
-        api.getPosts(1, 2, 'announcement')
+        api.getPosts(1, 3, "post"),
+        api.getPosts(1, 2, "announcement"),
       ]);
-      
+
       setPosts(postsResult.posts);
       setAnnouncements(announcementsResult.posts);
     } catch (error) {
-      console.error('Failed to load featured content:', error);
+      console.error("Failed to load featured content:", error);
     } finally {
       setLoading(false);
     }
@@ -84,10 +84,12 @@ export function FeaturedPosts({ onPostSelect, onViewAll }: FeaturedPostsProps) {
             </div>
 
             <div className="text-center mt-8">
-              <Button variant="outline" onClick={() => onViewAll?.()}>
-                View All Announcements
-                <ArrowRight size={16} className="ml-2" />
-              </Button>
+              <Link to="/announcements">
+                <Button variant="outline">
+                  View All Announcements
+                  <ArrowRight size={16} className="ml-2" />
+                </Button>
+              </Link>
             </div>
           </div>
         )}
@@ -99,7 +101,8 @@ export function FeaturedPosts({ onPostSelect, onViewAll }: FeaturedPostsProps) {
               Latest News & Updates
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Stay informed with the latest developments and initiatives in our municipality
+              Stay informed with the latest developments and initiatives in our
+              municipality
             </p>
           </div>
 
@@ -115,11 +118,13 @@ export function FeaturedPosts({ onPostSelect, onViewAll }: FeaturedPostsProps) {
           </div>
 
           <div className="text-center mt-12">
-            <Button onClick={() => onViewAll?.()}>
-              <Calendar size={16} className="mr-2" />
-              View All Posts
-              <ArrowRight size={16} className="ml-2" />
-            </Button>
+            <Link to="/posts">
+              <Button>
+                <Calendar size={16} className="mr-2" />
+                View All Posts
+                <ArrowRight size={16} className="ml-2" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

@@ -36,13 +36,20 @@ export const AdminLogin: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error(
+            "Too many login attempts. Please wait a few minutes before trying again."
+          );
+        }
         throw new Error(data.error || "Login failed");
       }
 
-      // Store token and user info
+      // Store token, refresh token, and user info
       localStorage.setItem("authToken", data.data.token);
+      localStorage.setItem("refreshToken", data.data.refreshToken);
       localStorage.setItem("user", JSON.stringify(data.data.user));
 
+      console.log("Login successful, calling onLoginSuccess", data.data);
       onLoginSuccess(data.data.token, data.data.user);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Login failed");

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useDropzone } from "react-dropzone";
+import { ImageResizer } from "./ImageResizer";
 import {
   Bold,
   Italic,
@@ -42,7 +43,118 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [showToolbar, setShowToolbar] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [showImageResizer, setShowImageResizer] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState("");
+  const [selectedImageRange, setSelectedImageRange] = useState<{
+    index: number;
+    length: number;
+  } | null>(null);
   const [focusCount, setFocusCount] = useState(0);
+
+  // Handle image selection for resizing
+  const handleImageClick = useCallback(
+    (e: Event) => {
+      console.log("Image click handler triggered!", e);
+      e.preventDefault();
+      e.stopPropagation();
+
+      const target = e.target as HTMLElement;
+      console.log("Target element:", target, "Tag:", target.tagName);
+
+      if (target.tagName === "IMG") {
+        const img = target as HTMLImageElement;
+        console.log("Image clicked:", img.src);
+
+        // Prevent any default link behavior
+        if (img.closest("a")) {
+          console.log("Image is inside a link, skipping");
+          return;
+        }
+
+        setSelectedImageUrl(img.src);
+        console.log("Setting selectedImageUrl to:", img.src);
+
+        // Find the image position in the editor
+        if (quillRef) {
+          const quill = quillRef.getEditor();
+          const delta = quill.getContents();
+          let index = 0;
+
+          delta.ops?.forEach((op) => {
+            if (
+              op.insert &&
+              typeof op.insert === "object" &&
+              op.insert.image === img.src
+            ) {
+              setSelectedImageRange({ index, length: 1 });
+              console.log("Found image at index:", index);
+            } else if (typeof op.insert === "string") {
+              index += op.insert.length;
+            } else {
+              index += 1;
+            }
+          });
+        }
+
+        console.log("Opening image resizer...");
+        setShowImageResizer(true);
+      } else {
+        console.log("Click was not on an image");
+      }
+    },
+    [quillRef]
+  );
+
+  // Handle image update after resizing
+  const handleImageUpdated = useCallback(
+    (newImageUrl: string) => {
+      if (quillRef && selectedImageRange) {
+        const quill = quillRef.getEditor();
+
+        // Replace the old image with the new resized image
+        quill.deleteText(selectedImageRange.index, selectedImageRange.length);
+        quill.insertEmbed(selectedImageRange.index, "image", newImageUrl);
+        quill.setSelection(selectedImageRange.index + 1, 0);
+      }
+
+      setShowImageResizer(false);
+      setSelectedImageUrl("");
+      setSelectedImageRange(null);
+    },
+    [quillRef, selectedImageRange]
+  );
+
+  // Add event listener for image clicks
+  React.useEffect(() => {
+    const addImageClickListener = () => {
+      const editorElement = document.querySelector(".ql-editor");
+      if (editorElement) {
+        // Remove any existing listeners first
+        editorElement.removeEventListener("click", handleImageClick);
+        // Add the new listener with capture to ensure it runs before other handlers
+        editorElement.addEventListener("click", handleImageClick, {
+          capture: true,
+        });
+
+        return () => {
+          editorElement.removeEventListener("click", handleImageClick, {
+            capture: true,
+          });
+        };
+      }
+    };
+
+    // Add listener immediately if editor exists
+    const cleanup = addImageClickListener();
+
+    // Also add listener after a short delay to catch dynamically rendered content
+    const timeoutId = setTimeout(addImageClickListener, 100);
+
+    return () => {
+      if (cleanup) cleanup();
+      clearTimeout(timeoutId);
+    };
+  }, [handleImageClick, focusCount]);
 
   // Default image upload function
   const defaultImageUpload = async (files: File[]): Promise<string[]> => {
@@ -56,20 +168,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     formData.append("image", files[0]);
 
     const token = localStorage.getItem("authToken");
-    console.log("=== IMAGE UPLOAD DEBUG ===");
-    console.log(
-      "Token from localStorage:",
-      token ? `Token found (length: ${token.length})` : "No token found"
-    );
-    console.log(
-      "Token preview (first 30 chars):",
-      token ? token.substring(0, 30) + "..." : "N/A"
-    );
-    console.log("Using token:", token ? "Token exists" : "No token found");
 
     try {
-      console.log("Uploading to: http://localhost:5000/api/upload/image");
-
       const response = await fetch("http://localhost:5000/api/upload/image", {
         method: "POST",
         headers: {
@@ -78,11 +178,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         body: formData,
       });
 
-      console.log("Upload response status:", response.status);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Upload error response:", errorText);
 
         let errorData;
         try {
@@ -99,19 +196,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       }
 
       const data = await response.json();
-      console.log("Upload successful, response data:", data);
 
       if (!data.data || !data.data.url) {
         throw new Error("Invalid response format from server");
       }
 
       const fullUrl = `http://localhost:5000${data.data.url}`;
-      console.log("Generated full URL:", fullUrl);
 
       return [fullUrl];
     } catch (error) {
-      console.error("Image upload failed:", error);
-
       // Show user-friendly error message
       if (error instanceof Error) {
         alert(`Image upload failed: ${error.message}`);
@@ -200,18 +293,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           const range = quill.getSelection(true);
 
           uploadedUrls.forEach((url, index) => {
-            console.log(`Inserting image ${index + 1}:`, url);
             quill.insertEmbed(range.index + index, "image", url);
             quill.setSelection(range.index + index + 1, 0);
           });
-
-          console.log("Images successfully inserted into editor");
-        } else {
-          console.error("Quill editor not available for image insertion");
         }
       } catch (error) {
-        console.error("Upload failed:", error);
-
         // Remove failed uploads from the UI
         setUploadedImages((prev) =>
           prev.filter(
@@ -426,7 +512,43 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         {/* Rich Text Editor */}
         <div className="p-4">
           <ReactQuill
-            ref={setQuillRef}
+            ref={(ref) => {
+              setQuillRef(ref);
+              if (ref) {
+                // Add custom image handlers when Quill is ready
+                const quill = ref.getEditor();
+
+                // Single click handler
+                quill.root.addEventListener("click", (e: Event) => {
+                  const target = e.target as HTMLElement;
+                  if (target.tagName === "IMG") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleImageClick(e);
+                  }
+                });
+
+                // Double click handler as backup
+                quill.root.addEventListener("dblclick", (e: Event) => {
+                  const target = e.target as HTMLElement;
+                  if (target.tagName === "IMG") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleImageClick(e);
+                  }
+                });
+
+                // Right click handler for context menu
+                quill.root.addEventListener("contextmenu", (e: Event) => {
+                  const target = e.target as HTMLElement;
+                  if (target.tagName === "IMG") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleImageClick(e);
+                  }
+                });
+              }
+            }}
             theme="snow"
             value={value}
             onChange={onChange}
@@ -455,6 +577,23 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               >
                 <Image className="w-4 h-4" />
                 Add Photos
+              </Button>
+
+              {/* Test Image Resizer Button */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  console.log("Test Resizer button clicked");
+                  // Test with a sample image URL
+                  setSelectedImageUrl("https://via.placeholder.com/600x400");
+                  setShowImageResizer(true);
+                  console.log("Set showImageResizer to true");
+                }}
+              >
+                🔧 Test Resizer
               </Button>
 
               <input
@@ -552,8 +691,62 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           height: auto;
           border-radius: 8px;
           margin: 8px 0;
+          cursor: pointer;
+          border: 2px solid transparent;
+          transition: all 0.2s;
+          position: relative;
+        }
+        
+        .ql-editor img:hover {
+          border-color: #3b82f6;
+          box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+          transform: scale(1.02);
+        }
+        
+        .ql-editor img:hover::after {
+          content: "Click to resize";
+          position: absolute;
+          top: -25px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(59, 130, 246, 0.9);
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          white-space: nowrap;
+          pointer-events: none;
         }
       `}</style>
+
+      {/* Image Resizer Modal */}
+      {(() => {
+        console.log(
+          "Rendering check - showImageResizer:",
+          showImageResizer,
+          "selectedImageUrl:",
+          selectedImageUrl
+        );
+        return null;
+      })()}
+      {showImageResizer && selectedImageUrl && (
+        <>
+          {(() => {
+            console.log("Rendering ImageResizer component!");
+            return null;
+          })()}
+          <ImageResizer
+            imageUrl={selectedImageUrl}
+            onImageUpdated={handleImageUpdated}
+            onClose={() => {
+              console.log("ImageResizer close clicked");
+              setShowImageResizer(false);
+              setSelectedImageUrl("");
+              setSelectedImageRange(null);
+            }}
+          />
+        </>
+      )}
     </div>
   );
 };

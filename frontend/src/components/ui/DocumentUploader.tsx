@@ -39,8 +39,6 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
 
   // Default document upload function
   const defaultDocumentUpload = async (files: File[]): Promise<string[]> => {
-    console.log("Starting document upload for files:", files);
-
     if (!files || files.length === 0) {
       throw new Error("No files to upload");
     }
@@ -52,21 +50,8 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
       formData.append("document", file);
 
       const token = localStorage.getItem("authToken");
-      console.log("=== DOCUMENT UPLOAD DEBUG ===");
-      console.log(
-        "Token from localStorage:",
-        token ? `Token found (length: ${token.length})` : "No token found"
-      );
-      console.log(
-        "Token preview (first 30 chars):",
-        token ? token.substring(0, 30) + "..." : "N/A"
-      );
 
       try {
-        console.log(
-          "Uploading document to: http://localhost:5000/api/upload/document"
-        );
-
         const response = await fetch(
           "http://localhost:5000/api/upload/document",
           {
@@ -76,11 +61,8 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
           }
         );
 
-        console.log("Document upload response status:", response.status);
-
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("Document upload error response:", errorText);
 
           let errorData;
           try {
@@ -97,18 +79,15 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
         }
 
         const data = await response.json();
-        console.log("Document upload successful, response data:", data);
 
         if (!data.data || !data.data.url) {
           throw new Error("Invalid response format from server");
         }
 
         const fullUrl = `http://localhost:5000${data.data.url}`;
-        console.log("Generated full document URL:", fullUrl);
 
         uploadedUrls.push(fullUrl);
       } catch (error) {
-        console.error("Document upload failed:", error);
         throw error;
       }
     }
@@ -157,11 +136,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
           }
           return newDocs;
         });
-
-        console.log("Documents successfully uploaded");
       } catch (error) {
-        console.error("Document upload failed:", error);
-
         // Mark failed uploads
         setUploadedDocuments((prev) =>
           prev.map((doc) => {

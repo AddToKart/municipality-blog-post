@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsr generate && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "routes:gen": "tsr generate"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
+    "@tanstack/react-router": "^1.132.17",
+    "@tanstack/router-devtools": "^1.132.17",
     "@types/react-dropzone": "^4.2.2",
     "clsx": "^2.1.1",
     "lucide-react": "^0.344.0",
@@ -24,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@tanstack/router-cli": "^1.132.17",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

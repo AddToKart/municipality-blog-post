@@ -47,10 +47,10 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Rate limiting
+// Rate limiting - Production-friendly limits
 const limiter = rateLimit({
   windowMs: parseInt(process.env["RATE_LIMIT_WINDOW_MS"] || "900000"), // 15 minutes
-  max: parseInt(process.env["RATE_LIMIT_MAX_REQUESTS"] || "100"),
+  max: parseInt(process.env["RATE_LIMIT_MAX_REQUESTS"] || "300"), // Increased from 100 to 300
   message: {
     error: "Too many requests from this IP, please try again later.",
   } as ApiResponse,
@@ -59,17 +59,35 @@ const limiter = rateLimit({
 });
 app.use("/api/", limiter);
 
-// Stricter rate limiting for auth endpoints
+// Rate limiting for auth endpoints - more reasonable for production
 const authLimiter = rateLimit({
-  windowMs: parseInt(process.env["RATE_LIMIT_WINDOW_MS"] || "900000"),
-  max: parseInt(process.env["AUTH_RATE_LIMIT_MAX_REQUESTS"] || "5"),
+  windowMs: parseInt(process.env["RATE_LIMIT_WINDOW_MS"] || "900000"), // 15 minutes
+  max: parseInt(process.env["AUTH_RATE_LIMIT_MAX_REQUESTS"] || "20"), // Increased from 5 to 20
   message: {
     error: "Too many authentication attempts, please try again later.",
   } as ApiResponse,
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip rate limiting for successful token validation on /me endpoint
+  skip: (req) => {
+    return req.path === "/me" && req.method === "GET";
+  },
 });
-app.use("/api/auth/", authLimiter);
+
+// Apply stricter rate limiting only to login endpoint
+app.use("/api/auth/login", authLimiter);
+
+// Lighter rate limiting for other auth endpoints
+const authLightLimiter = rateLimit({
+  windowMs: parseInt(process.env["RATE_LIMIT_WINDOW_MS"] || "900000"),
+  max: parseInt(process.env["AUTH_RATE_LIMIT_MAX_REQUESTS"] || "100"), // Much higher for /me endpoint
+  message: {
+    error: "Too many requests, please try again later.",
+  } as ApiResponse,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api/auth/", authLightLimiter);
 
 // Body parsing middleware with error handling
 app.use(express.json({ limit: "10mb" }));

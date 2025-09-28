@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
 import { query } from "@/config/database";
+import { ProductionLogger } from "@/utils/logger";
 import {
   AuthRequest,
   LoginRequest,
@@ -87,7 +88,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     res.json(response);
   } catch (error) {
-    console.error("Login error:", error);
+    const logger = new ProductionLogger();
+    logger.error("Authentication error occurred");
     const response: ApiResponse = {
       success: false,
       error: "Internal server error",
@@ -152,7 +154,8 @@ export const getCurrentUser = async (
 
     res.json(response);
   } catch (error) {
-    console.error("Get current user error:", error);
+    const logger = new ProductionLogger();
+    logger.error("User authentication check failed");
     const response: ApiResponse = {
       success: false,
       error: "Internal server error",

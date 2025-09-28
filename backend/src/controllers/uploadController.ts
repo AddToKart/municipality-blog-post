@@ -69,11 +69,11 @@ const documentUpload = multer({
 const ensureUploadDir = async (dir: string): Promise<void> => {
   try {
     await fs.access(dir);
-    console.log(`Upload directory exists: ${dir}`);
+    // Upload directory already exists
   } catch {
-    console.log(`Creating upload directory: ${dir}`);
+    // Creating upload directory
     await fs.mkdir(dir, { recursive: true });
-    console.log(`Upload directory created: ${dir}`);
+    // Upload directory created
   }
 };
 
@@ -90,21 +90,10 @@ export const uploadImage = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
-  console.log("=== Image Upload Request ===");
-  console.log(
-    "User:",
-    req.user ? `ID: ${req.user.id}, Username: ${req.user.username}` : "No user"
-  );
-  console.log(
-    "File:",
-    req.file
-      ? `Name: ${req.file.originalname}, Size: ${req.file.size} bytes`
-      : "No file"
-  );
+  // Image upload request received
 
   try {
     if (!req.user) {
-      console.log("❌ Upload failed: No authentication");
       const response: ApiResponse = {
         success: false,
         error: "Authentication required",
@@ -172,15 +161,7 @@ export const uploadImage = async (
     console.log("✅ Upload completed successfully");
     res.json(response);
   } catch (error) {
-    console.error("❌ Upload error details:", error);
-    console.error(
-      "Error type:",
-      error instanceof Error ? error.constructor.name : typeof error
-    );
-    console.error(
-      "Error message:",
-      error instanceof Error ? error.message : String(error)
-    );
+    // Upload error occurred - details hidden for security
 
     const response: ApiResponse = {
       success: false,
@@ -343,21 +324,10 @@ export const uploadDocument = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
-  console.log("=== Document Upload Request ===");
-  console.log(
-    "User:",
-    req.user ? `ID: ${req.user.id}, Username: ${req.user.username}` : "No user"
-  );
-  console.log(
-    "File:",
-    req.file
-      ? `Name: ${req.file.originalname}, Size: ${req.file.size} bytes, Type: ${req.file.mimetype}`
-      : "No file"
-  );
+  // Document upload request received
 
   try {
     if (!req.user) {
-      console.log("❌ Upload failed: No authentication");
       const response: ApiResponse = {
         success: false,
         error: "Authentication required",

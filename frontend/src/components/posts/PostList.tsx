@@ -1,27 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, TrendingUp } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Badge } from '../ui/badge';
-import { Card } from '../ui/card';
-import { PostCard } from './PostCard';
-import { Post } from '../../types';
-import { api } from '../../lib/api';
+import React, { useState, useEffect } from "react";
+import { Search, Filter, Calendar, TrendingUp } from "lucide-react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Badge } from "../ui/badge";
+import { Card } from "../ui/card";
+import { PostCard } from "./PostCard";
+import { Post } from "../../types";
+import { api } from "../../lib/api";
 
 interface PostListProps {
-  onPostSelect?: (post: Post) => void;
-  category?: 'post' | 'announcement';
-  featuredOnly?: boolean;
+  category?: "post" | "announcement";
 }
 
-export function PostList({ onPostSelect, category, featuredOnly = false }: PostListProps) {
+export function PostList({ category }: PostListProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>(category || '');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    category || ""
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0);
-  const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
+  const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
 
   const postsPerPage = 9;
   const totalPages = Math.ceil(totalPosts / postsPerPage);
@@ -34,25 +34,33 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
     setLoading(true);
     try {
       const { posts: fetchedPosts, total } = await api.getPosts(
-        currentPage, 
-        postsPerPage, 
-        selectedCategory || undefined, 
+        currentPage,
+        postsPerPage,
+        selectedCategory || undefined,
         searchQuery || undefined
       );
-      
+
       // Sort posts based on selected criteria
       const sortedPosts = [...fetchedPosts].sort((a, b) => {
-        if (sortBy === 'popular') {
-          return (b.view_count + b.like_count + b.love_count + b.helpful_count) - 
-                 (a.view_count + a.like_count + a.love_count + a.helpful_count);
+        if (sortBy === "popular") {
+          return (
+            b.view_count +
+            b.like_count +
+            b.love_count +
+            b.helpful_count -
+            (a.view_count + a.like_count + a.love_count + a.helpful_count)
+          );
         }
-        return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
+        return (
+          new Date(b.published_at).getTime() -
+          new Date(a.published_at).getTime()
+        );
       });
-      
+
       setPosts(sortedPosts);
       setTotalPosts(total);
     } catch (error) {
-      console.error('Failed to load posts:', error);
+      console.error("Failed to load posts:", error);
     } finally {
       setLoading(false);
     }
@@ -68,15 +76,15 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
     setCurrentPage(1);
   };
 
-  const handleSortChange = (sort: 'recent' | 'popular') => {
+  const handleSortChange = (sort: "recent" | "popular") => {
     setSortBy(sort);
     setCurrentPage(1);
   };
 
   const categories = [
-    { id: '', label: 'All Posts', count: totalPosts },
-    { id: 'post', label: 'News & Updates', count: 0 },
-    { id: 'announcement', label: 'Announcements', count: 0 }
+    { id: "", label: "All Posts", count: totalPosts },
+    { id: "post", label: "News & Updates", count: 0 },
+    { id: "announcement", label: "Announcements", count: 0 },
   ];
 
   if (loading && posts.length === 0) {
@@ -106,13 +114,15 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          {category === 'announcement' ? 'Municipal Announcements' : 
-           category === 'post' ? 'Latest News & Updates' : 
-           'All Posts & Announcements'}
+          {category === "announcement"
+            ? "Municipal Announcements"
+            : category === "post"
+              ? "Latest News & Updates"
+              : "All Posts & Announcements"}
         </h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Stay informed with the latest news, updates, and important announcements 
-          from the Municipality of Santa Maria.
+          Stay informed with the latest news, updates, and important
+          announcements from the Municipality of Santa Maria.
         </p>
       </div>
 
@@ -122,7 +132,10 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
           {/* Search */}
           <div className="flex-1 max-w-md">
             <div className="relative">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search
+                size={20}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
               <Input
                 type="text"
                 placeholder="Search posts and announcements..."
@@ -143,7 +156,7 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
                 onClick={() => handleCategoryChange(cat.id)}
                 className="flex items-center gap-2"
               >
-                {cat.id === 'announcement' && <Filter size={14} />}
+                {cat.id === "announcement" && <Filter size={14} />}
                 {cat.label}
               </Button>
             ))}
@@ -152,17 +165,17 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
           {/* Sort Options */}
           <div className="flex gap-2">
             <Button
-              variant={sortBy === 'recent' ? "default" : "outline"}
+              variant={sortBy === "recent" ? "default" : "outline"}
               size="sm"
-              onClick={() => handleSortChange('recent')}
+              onClick={() => handleSortChange("recent")}
             >
               <Calendar size={14} className="mr-2" />
               Recent
             </Button>
             <Button
-              variant={sortBy === 'popular' ? "default" : "outline"}
+              variant={sortBy === "popular" ? "default" : "outline"}
               size="sm"
-              onClick={() => handleSortChange('popular')}
+              onClick={() => handleSortChange("popular")}
             >
               <TrendingUp size={14} className="mr-2" />
               Popular
@@ -177,8 +190,8 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
             {searchQuery && (
               <Badge variant="secondary">
                 Search: "{searchQuery}"
-                <button 
-                  onClick={() => handleSearch('')}
+                <button
+                  onClick={() => handleSearch("")}
                   className="ml-2 hover:text-red-600"
                 >
                   ×
@@ -187,9 +200,10 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
             )}
             {selectedCategory && (
               <Badge variant="secondary">
-                Category: {categories.find(c => c.id === selectedCategory)?.label}
-                <button 
-                  onClick={() => handleCategoryChange('')}
+                Category:{" "}
+                {categories.find((c) => c.id === selectedCategory)?.label}
+                <button
+                  onClick={() => handleCategoryChange("")}
                   className="ml-2 hover:text-red-600"
                 >
                   ×
@@ -209,18 +223,19 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
       {posts.length === 0 ? (
         <Card className="p-12 text-center">
           <Search size={48} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No posts found</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No posts found
+          </h3>
           <p className="text-gray-500">
-            {searchQuery ? 
-              `No posts match your search for "${searchQuery}".` :
-              'No posts available at the moment.'
-            }
+            {searchQuery
+              ? `No posts match your search for "${searchQuery}".`
+              : "No posts available at the moment."}
           </p>
           {searchQuery && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="mt-4"
-              onClick={() => handleSearch('')}
+              onClick={() => handleSearch("")}
             >
               Clear Search
             </Button>
@@ -229,12 +244,7 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onClick={() => onPostSelect?.(post)}
-              showExcerpt={true}
-            />
+            <PostCard key={post.id} post={post} showExcerpt={true} />
           ))}
         </div>
       )}
@@ -245,16 +255,16 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
             disabled={currentPage === 1 || loading}
           >
             Previous
           </Button>
-          
+
           {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
             const page = i + 1;
             const isCurrentPage = page === currentPage;
-            
+
             return (
               <Button
                 key={page}
@@ -267,7 +277,7 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
               </Button>
             );
           })}
-          
+
           {totalPages > 5 && currentPage < totalPages - 2 && (
             <>
               <span className="px-2">...</span>
@@ -281,11 +291,13 @@ export function PostList({ onPostSelect, category, featuredOnly = false }: PostL
               </Button>
             </>
           )}
-          
+
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+            }
             disabled={currentPage === totalPages || loading}
           >
             Next

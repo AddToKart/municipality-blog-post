@@ -18,8 +18,9 @@ export const AdminPage: React.FC = () => {
     // Check if user is already logged in
     const checkAuth = async () => {
       const token = localStorage.getItem("authToken");
+      const refreshToken = localStorage.getItem("refreshToken");
 
-      if (!token) {
+      if (!token && !refreshToken) {
         setLoading(false);
         return;
       }
@@ -27,12 +28,38 @@ export const AdminPage: React.FC = () => {
       try {
         const API_BASE_URL =
           import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+
+        let response = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
+
+        // If token is invalid, try to refresh
+        if (!response.ok && response.status === 401 && refreshToken) {
+          const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json();
+            localStorage.setItem("authToken", refreshData.data.token);
+            localStorage.setItem("refreshToken", refreshData.data.refreshToken);
+
+            // Retry with new token
+            response = await fetch(`${API_BASE_URL}/auth/me`, {
+              headers: {
+                Authorization: `Bearer ${refreshData.data.token}`,
+                "Content-Type": "application/json",
+              },
+            });
+          }
+        }
 
         if (response.ok) {
           const userData = await response.json();
@@ -42,16 +69,19 @@ export const AdminPage: React.FC = () => {
           } else {
             // Not an admin, clear tokens
             localStorage.removeItem("authToken");
+            localStorage.removeItem("refreshToken");
             localStorage.removeItem("user");
           }
         } else {
           // Invalid token, clear it
           localStorage.removeItem("authToken");
+          localStorage.removeItem("refreshToken");
           localStorage.removeItem("user");
         }
       } catch (error) {
         console.error("Auth check failed:", error);
         localStorage.removeItem("authToken");
+        localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
       } finally {
         setLoading(false);
@@ -75,6 +105,7 @@ export const AdminPage: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     setCurrentUser(null);
     setIsAuthenticated(false);

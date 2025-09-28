@@ -229,6 +229,91 @@ export const getPostById = async (
   }
 };
 
+export const getPostBySlug = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { slug } = req.params;
+
+    if (!slug || !slug.trim()) {
+      const response: ApiResponse = {
+        success: false,
+        error: "Invalid post slug",
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    const postQuery = `
+      SELECT 
+        p.*,
+        u.username as author_name,
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.status = 'approved') as comment_count
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id
+      WHERE p.slug = $1 AND p.status = 'published'
+    `;
+
+    const posts = await query<
+      PostRow & { author_name: string; comment_count: string }
+    >(postQuery, [slug]);
+
+    if (posts.length === 0) {
+      const response: ApiResponse = {
+        success: false,
+        error: "Post not found",
+      };
+      res.status(404).json(response);
+      return;
+    }
+
+    const post = posts[0]!;
+
+    // Increment view count
+    await query("UPDATE posts SET view_count = view_count + 1 WHERE id = $1", [
+      post.id,
+    ]);
+
+    // Transform to API format
+    const transformedPost = {
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      content: post.content,
+      excerpt: post.excerpt,
+      category: post.category as "post" | "announcement",
+      status: post.status as "draft" | "published",
+      featured_image: post.featured_image,
+      tags: post.tags || [],
+      author_id: post.author_id,
+      author_name: post.author_name,
+      like_count: post.like_count,
+      love_count: post.love_count,
+      helpful_count: post.helpful_count,
+      view_count: post.view_count + 1, // Include the increment
+      comment_count: parseInt(post.comment_count || "0"),
+      created_at: post.created_at.toISOString(),
+      updated_at: post.updated_at.toISOString(),
+      published_at: post.published_at?.toISOString() || "",
+    };
+
+    const response: ApiResponse = {
+      success: true,
+      data: transformedPost,
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error("Get post by slug error:", error);
+    const response: ApiResponse = {
+      success: false,
+      error: "Failed to fetch post",
+    };
+    res.status(500).json(response);
+  }
+};
+
 export const createPost = async (
   req: AuthRequest,
   res: Response

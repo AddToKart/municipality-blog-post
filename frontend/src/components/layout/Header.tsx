@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Search, Menu, X, Bell, MapPin, Phone, Mail } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import React, { useState } from "react";
+import { Search, Menu, X, Bell, MapPin, Phone, Mail } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -9,7 +10,7 @@ interface HeaderProps {
 
 export function Header({ onSearch }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,12 +20,12 @@ export function Header({ onSearch }: HeaderProps) {
   };
 
   const navigation = [
-    { name: 'Home', href: '#' },
-    { name: 'Posts', href: '#posts' },
-    { name: 'Announcements', href: '#announcements' },
-    { name: 'Services', href: '#services' },
-    { name: 'About', href: '#about' },
-    { name: 'Contact', href: '#contact' },
+    { name: "Home", to: "/" },
+    { name: "Posts", to: "/posts" },
+    { name: "Announcements", to: "/announcements" },
+    { name: "Services", to: "/#services" },
+    { name: "About", to: "/#about" },
+    { name: "Contact", to: "/#contact" },
   ];
 
   return (
@@ -70,13 +71,13 @@ export function Header({ onSearch }: HeaderProps) {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
-                href={item.href}
+                to={item.to}
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -137,14 +138,13 @@ export function Header({ onSearch }: HeaderProps) {
         <div className="md:hidden bg-gray-50 border-t">
           <nav className="max-w-7xl mx-auto px-4 py-4 space-y-2">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
-                href={item.href}
-                className="block py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-white rounded-lg transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
+                to={item.to}
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
           </nav>
         </div>

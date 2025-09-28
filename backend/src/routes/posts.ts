@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getAllPosts,
   getPostById,
+  getPostBySlug,
   createPost,
   updatePost,
   deletePost,
@@ -12,6 +13,7 @@ const router = Router();
 
 // Public routes
 router.get("/", getAllPosts);
+router.get("/slug/:slug", getPostBySlug);
 router.get("/:id", getPostById);
 
 // Protected routes (admin only)

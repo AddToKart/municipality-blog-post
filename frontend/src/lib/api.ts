@@ -27,10 +27,47 @@ const getAuthToken = (): string | null => {
   return localStorage.getItem("authToken");
 };
 
-// Helper function to make API requests
+// Helper function to get refresh token
+const getRefreshToken = (): string | null => {
+  return localStorage.getItem("refreshToken");
+};
+
+// Helper function to refresh access token
+const refreshAccessToken = async (): Promise<boolean> => {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem("authToken", data.data.token);
+      localStorage.setItem("refreshToken", data.data.refreshToken);
+      return true;
+    }
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+  }
+
+  // Clear tokens if refresh fails
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
+  return false;
+};
+
+// Helper function to make API requests with automatic token refresh
 const apiRequest = async <T = any>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retryCount = 0
 ): Promise<ApiResponse<T>> => {
   const token = getAuthToken();
 
@@ -43,9 +80,22 @@ const apiRequest = async <T = any>(
     ...options,
   });
 
+  // If unauthorized and we haven't retried, try to refresh token
+  if (response.status === 401 && retryCount === 0) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      // Retry the request with new token
+      return apiRequest(endpoint, options, retryCount + 1);
+    }
+  }
+
   const data = await response.json();
 
   if (!response.ok) {
+    // If still unauthorized after refresh attempt, redirect to login
+    if (response.status === 401) {
+      window.location.href = "/admin";
+    }
     throw new Error(data.error || `HTTP error! status: ${response.status}`);
   }
 
@@ -306,12 +356,11 @@ export const api = {
 
   async getPostBySlug(slug: string): Promise<Post | null> {
     try {
-      // Get all posts and find by slug (could be optimized with a dedicated endpoint)
-      const response = await apiRequest<Post[]>(`/posts?search=${slug}`);
+      // Use dedicated slug endpoint - much more efficient!
+      const response = await apiRequest<Post>(`/posts/slug/${slug}`);
 
       if (response.success && response.data) {
-        const post = response.data.find((p) => p.slug === slug);
-        return post || null;
+        return response.data;
       }
 
       throw new Error(response.error || "Post not found");
