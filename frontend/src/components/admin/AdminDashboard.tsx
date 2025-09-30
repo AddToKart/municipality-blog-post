@@ -67,7 +67,10 @@ export const AdminDashboard: React.FC = () => {
 
         if (response.ok) {
           const userData = await response.json();
-          setCurrentUser(userData.data);
+          // Fix: Access userData.data.user instead of userData.data
+          if (userData.success && userData.data.user) {
+            setCurrentUser(userData.data.user);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch user info:", error);
@@ -133,9 +136,28 @@ export const AdminDashboard: React.FC = () => {
     setSelectedPost(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const token = localStorage.getItem("authToken");
+
+    // Call backend logout to blacklist the token
+    if (token) {
+      try {
+        const API_BASE_URL =
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (error) {
+        console.error("Logout API call failed:", error);
+      }
+    }
+
+    // Clear local storage
     localStorage.removeItem("authToken");
-    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     window.location.href = "/";
   };

@@ -7,7 +7,6 @@ import {
   singleImageUpload,
   multipleImageUpload,
   singleDocumentUpload,
-  multipleDocumentUpload,
 } from "@/controllers/uploadController";
 import { authenticate, requireAdmin } from "@/middleware/auth";
 

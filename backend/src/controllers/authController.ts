@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
 import { query } from "@/config/database";
 import { ProductionLogger } from "@/utils/logger";
+import { tokenBlacklist } from "@/utils/tokenBlacklist";
+import { failedLoginTracker } from "@/middleware/authRateLimiter";
 import {
   AuthRequest,
   LoginRequest,
@@ -10,6 +12,8 @@ import {
   ApiResponse,
   UserRow,
 } from "@/types";
+
+const logger = new ProductionLogger();
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -25,12 +29,31 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Find user by email
-    const users = await query<UserRow>("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    // Check if IP or email is blocked due to failed attempts
+    const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+    const identifier = `${email.toLowerCase()}:${clientIp}`;
+
+    if (failedLoginTracker.isBlocked(identifier)) {
+      const remainingMinutes =
+        failedLoginTracker.getBlockTimeRemaining(identifier);
+      const response: ApiResponse = {
+        success: false,
+        error: `Too many failed login attempts. Please try again in ${remainingMinutes} minutes.`,
+      };
+      res.status(429).json(response);
+      return;
+    }
+
+    // Find user by email (using parameterized query to prevent SQL injection)
+    const users = await query<UserRow>(
+      "SELECT * FROM users WHERE LOWER(email) = LOWER($1)",
+      [email]
+    );
 
     if (users.length === 0) {
+      // Record failed attempt
+      failedLoginTracker.recordFailure(identifier);
+
       const response: ApiResponse = {
         success: false,
         error: "Invalid credentials",
@@ -45,6 +68,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
+      // Record failed attempt
+      failedLoginTracker.recordFailure(identifier);
+
       const response: ApiResponse = {
         success: false,
         error: "Invalid credentials",
@@ -53,8 +79,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Clear failed attempts on successful login
+    failedLoginTracker.recordSuccess(identifier);
+
     // Generate JWT token
     if (!process.env["JWT_SECRET"]) {
+      logger.error("JWT_SECRET not configured");
       throw new Error("JWT_SECRET not configured");
     }
 
@@ -68,6 +98,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const token = jwt.sign(payload, process.env["JWT_SECRET"]!, {
       expiresIn: "24h",
     });
+
+    logger.info("User logged in successfully");
 
     // Return success response with token and user info
     const response: ApiResponse = {
@@ -88,7 +120,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     res.json(response);
   } catch (error) {
-    const logger = new ProductionLogger();
     logger.error("Authentication error occurred");
     const response: ApiResponse = {
       success: false,
@@ -98,13 +129,46 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const logout = async (_req: Request, res: Response): Promise<void> => {
-  // For JWT, logout is handled client-side by removing the token
-  const response: ApiResponse = {
-    success: true,
-    message: "Logged out successfully",
-  };
-  res.json(response);
+export const logout = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.substring(7);
+
+      // Decode token to get expiration time
+      try {
+        const decoded = jwt.decode(token) as JwtPayload & { exp: number };
+
+        if (decoded && decoded.exp) {
+          // Add token to blacklist with its expiration time
+          const expiresAt = decoded.exp * 1000; // Convert to milliseconds
+          tokenBlacklist.blacklistToken(token, expiresAt);
+
+          logger.info("User logged out - token blacklisted");
+        }
+      } catch (decodeError) {
+        // If token is invalid, that's okay for logout
+        logger.info("Logout attempted with invalid token");
+      }
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      message: "Logged out successfully",
+    };
+    res.json(response);
+  } catch (error) {
+    logger.error("Logout error occurred");
+    const response: ApiResponse = {
+      success: false,
+      error: "Logout failed",
+    };
+    res.status(500).json(response);
+  }
 };
 
 export const getCurrentUser = async (
@@ -121,13 +185,14 @@ export const getCurrentUser = async (
       return;
     }
 
-    // Fetch fresh user data from database
+    // Fetch fresh user data from database (parameterized query)
     const users = await query<UserRow>(
       "SELECT id, username, email, role, created_at, updated_at FROM users WHERE id = $1",
       [req.user.id]
     );
 
     if (users.length === 0) {
+      logger.error("User not found in database but has valid token");
       const response: ApiResponse = {
         success: false,
         error: "User not found",
@@ -154,7 +219,6 @@ export const getCurrentUser = async (
 
     res.json(response);
   } catch (error) {
-    const logger = new ProductionLogger();
     logger.error("User authentication check failed");
     const response: ApiResponse = {
       success: false,

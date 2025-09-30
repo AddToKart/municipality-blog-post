@@ -8,22 +8,17 @@ function AdminLoginPage() {
 
   const handleLoginSuccess = (token: string, user: any) => {
     console.log("handleLoginSuccess called", { token, user });
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (refreshToken) {
-      console.log("Calling login context", { token, refreshToken, user });
-      login(token, refreshToken, user);
+    console.log("Calling login context", { token, user });
+    login(token, user);
 
-      console.log("Attempting navigation to /admin/dashboard");
-      // Force navigation to dashboard - try both methods
-      try {
-        navigate({ to: "/admin/dashboard" });
-      } catch (error) {
-        // Fallback to window.location if navigate fails
-        console.log("Navigate failed, using window.location", error);
-        window.location.href = "/admin/dashboard";
-      }
-    } else {
-      console.error("No refresh token found");
+    console.log("Attempting navigation to /admin/dashboard");
+    // Force navigation to dashboard - try both methods
+    try {
+      navigate({ to: "/admin/dashboard" });
+    } catch (error) {
+      // Fallback to window.location if navigate fails
+      console.log("Navigate failed, using window.location", error);
+      window.location.href = "/admin/dashboard";
     }
   };
 

@@ -18,9 +18,8 @@ export const AdminPage: React.FC = () => {
     // Check if user is already logged in
     const checkAuth = async () => {
       const token = localStorage.getItem("authToken");
-      const refreshToken = localStorage.getItem("refreshToken");
 
-      if (!token && !refreshToken) {
+      if (!token) {
         setLoading(false);
         return;
       }
@@ -29,59 +28,40 @@ export const AdminPage: React.FC = () => {
         const API_BASE_URL =
           import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
-        let response = await fetch(`${API_BASE_URL}/auth/me`, {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
 
-        // If token is invalid, try to refresh
-        if (!response.ok && response.status === 401 && refreshToken) {
-          const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ refreshToken }),
-          });
-
-          if (refreshResponse.ok) {
-            const refreshData = await refreshResponse.json();
-            localStorage.setItem("authToken", refreshData.data.token);
-            localStorage.setItem("refreshToken", refreshData.data.refreshToken);
-
-            // Retry with new token
-            response = await fetch(`${API_BASE_URL}/auth/me`, {
-              headers: {
-                Authorization: `Bearer ${refreshData.data.token}`,
-                "Content-Type": "application/json",
-              },
-            });
-          }
-        }
-
         if (response.ok) {
           const userData = await response.json();
-          if (userData.success && userData.data.role === "admin") {
-            setCurrentUser(userData.data);
+          console.log("Auth check response:", userData);
+
+          // Fix: Check userData.data.user.role instead of userData.data.role
+          if (
+            userData.success &&
+            userData.data.user &&
+            userData.data.user.role === "admin"
+          ) {
+            setCurrentUser(userData.data.user);
             setIsAuthenticated(true);
           } else {
             // Not an admin, clear tokens
+            console.log("User is not an admin or invalid response");
             localStorage.removeItem("authToken");
-            localStorage.removeItem("refreshToken");
             localStorage.removeItem("user");
           }
         } else {
           // Invalid token, clear it
+          console.log("Token validation failed");
           localStorage.removeItem("authToken");
-          localStorage.removeItem("refreshToken");
           localStorage.removeItem("user");
         }
       } catch (error) {
         console.error("Auth check failed:", error);
         localStorage.removeItem("authToken");
-        localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
       } finally {
         setLoading(false);
@@ -103,9 +83,28 @@ export const AdminPage: React.FC = () => {
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const token = localStorage.getItem("authToken");
+
+    // Call backend logout to blacklist the token
+    if (token) {
+      try {
+        const API_BASE_URL =
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (error) {
+        console.error("Logout API call failed:", error);
+      }
+    }
+
+    // Clear local storage
     localStorage.removeItem("authToken");
-    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     setCurrentUser(null);
     setIsAuthenticated(false);

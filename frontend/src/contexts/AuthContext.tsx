@@ -13,9 +13,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, refreshToken: string, user: User) => void;
-  logout: () => void;
-  refreshAuth: () => Promise<boolean>;
+  login: (token: string, user: User) => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,57 +34,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const login = (token: string, refreshToken: string, userData: User) => {
+  const login = (token: string, userData: User) => {
     localStorage.setItem("authToken", token);
-    localStorage.setItem("refreshToken", refreshToken);
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     setIsAuthenticated(true);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const token = localStorage.getItem("authToken");
+    
+    // Call backend to blacklist token
+    if (token) {
+      try {
+        const API_BASE_URL =
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (error) {
+        console.error("Logout API call failed:", error);
+      }
+    }
+    
     localStorage.removeItem("authToken");
-    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     setUser(null);
     setIsAuthenticated(false);
   };
 
-  const refreshAuth = async (): Promise<boolean> => {
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (!refreshToken) return false;
 
-    try {
-      const API_BASE_URL =
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("authToken", data.data.token);
-        localStorage.setItem("refreshToken", data.data.refreshToken);
-        return true;
-      }
-    } catch (error) {
-      console.error("Token refresh failed:", error);
-    }
-
-    logout();
-    return false;
-  };
 
   const checkAuth = async () => {
     const token = localStorage.getItem("authToken");
-    const refreshToken = localStorage.getItem("refreshToken");
-    const savedUser = localStorage.getItem("user");
 
-    if (!token && !refreshToken) {
+    if (!token) {
       setIsLoading(false);
       return;
     }
@@ -94,41 +81,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const API_BASE_URL =
         import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
-      let response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      // If token is invalid, try to refresh
-      if (!response.ok && response.status === 401 && refreshToken) {
-        const refreshed = await refreshAuth();
-        if (refreshed) {
-          const newToken = localStorage.getItem("authToken");
-          response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${newToken}`,
-              "Content-Type": "application/json",
-            },
-          });
-        }
-      }
-
       if (response.ok) {
         const userData = await response.json();
-        if (userData.success && userData.data.role === "admin") {
-          setUser(userData.data);
+        // Fix: Check userData.data.user.role instead of userData.data.role
+        if (userData.success && userData.data.user && userData.data.user.role === "admin") {
+          setUser(userData.data.user);
           setIsAuthenticated(true);
         } else {
-          logout();
+          await logout();
         }
       } else {
-        logout();
+        await logout();
       }
     } catch (error) {
       console.error("Auth check failed:", error);
-      logout();
+      await logout();
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +118,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     login,
     logout,
-    refreshAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

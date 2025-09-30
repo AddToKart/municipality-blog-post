@@ -44,9 +44,8 @@ export const AdminLogin: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         throw new Error(data.error || "Login failed");
       }
 
-      // Store token, refresh token, and user info
+      // Store token and user info
       localStorage.setItem("authToken", data.data.token);
-      localStorage.setItem("refreshToken", data.data.refreshToken);
       localStorage.setItem("user", JSON.stringify(data.data.user));
 
       console.log("Login successful, calling onLoginSuccess", data.data);

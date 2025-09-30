@@ -1,6 +1,10 @@
 import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AuthRequest, JwtPayload, ApiResponse } from "@/types";
+import { tokenBlacklist } from "@/utils/tokenBlacklist";
+import { ProductionLogger } from "@/utils/logger";
+
+const logger = new ProductionLogger();
 
 export const authenticate = async (
   req: AuthRequest,
@@ -20,14 +24,36 @@ export const authenticate = async (
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Check if token is blacklisted (logged out)
+    if (tokenBlacklist.isBlacklisted(token)) {
+      const response: ApiResponse = {
+        success: false,
+        error: "Token has been invalidated. Please login again.",
+      };
+      res.status(401).json(response);
+      return;
+    }
+
     const jwtSecret = process.env["JWT_SECRET"];
 
     if (!jwtSecret) {
+      logger.error("JWT_SECRET not configured");
       throw new Error("JWT_SECRET not configured");
     }
 
     try {
       const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+
+      // Validate token payload
+      if (!decoded.id || !decoded.email || !decoded.username) {
+        const response: ApiResponse = {
+          success: false,
+          error: "Invalid token payload",
+        };
+        res.status(401).json(response);
+        return;
+      }
 
       // Set user in request
       req.user = {
@@ -42,6 +68,7 @@ export const authenticate = async (
 
       next();
     } catch (jwtError) {
+      logger.error("Token verification failed");
       const response: ApiResponse = {
         success: false,
         error: "Invalid or expired token",
@@ -50,6 +77,7 @@ export const authenticate = async (
       return;
     }
   } catch (error) {
+    logger.error("Authentication failed");
     const response: ApiResponse = {
       success: false,
       error: "Authentication failed",

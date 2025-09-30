@@ -94,7 +94,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // JSON parsing error handler
-app.use((err: any, req: Request, res: Response, next: any) => {
+app.use((err: any, _req: Request, res: Response, next: any) => {
   if (err instanceof SyntaxError && "body" in err) {
     const response: ApiResponse = {
       success: false,
