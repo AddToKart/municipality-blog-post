@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     const token = localStorage.getItem("authToken");
-    
+
     // Call backend to blacklist token
     if (token) {
       try {
@@ -60,14 +60,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         console.error("Logout API call failed:", error);
       }
     }
-    
+
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
     setUser(null);
     setIsAuthenticated(false);
   };
-
-
 
   const checkAuth = async () => {
     const token = localStorage.getItem("authToken");
@@ -91,7 +89,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (response.ok) {
         const userData = await response.json();
         // Fix: Check userData.data.user.role instead of userData.data.role
-        if (userData.success && userData.data.user && userData.data.user.role === "admin") {
+        if (
+          userData.success &&
+          userData.data.user &&
+          userData.data.user.role === "admin"
+        ) {
           setUser(userData.data.user);
           setIsAuthenticated(true);
         } else {

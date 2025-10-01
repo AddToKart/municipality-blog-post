@@ -54,25 +54,20 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Handle image selection for resizing
   const handleImageClick = useCallback(
     (e: Event) => {
-      console.log("Image click handler triggered!", e);
       e.preventDefault();
       e.stopPropagation();
 
       const target = e.target as HTMLElement;
-      console.log("Target element:", target, "Tag:", target.tagName);
 
       if (target.tagName === "IMG") {
         const img = target as HTMLImageElement;
-        console.log("Image clicked:", img.src);
 
         // Prevent any default link behavior
         if (img.closest("a")) {
-          console.log("Image is inside a link, skipping");
           return;
         }
 
         setSelectedImageUrl(img.src);
-        console.log("Setting selectedImageUrl to:", img.src);
 
         // Find the image position in the editor
         if (quillRef) {
@@ -87,7 +82,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               op.insert.image === img.src
             ) {
               setSelectedImageRange({ index, length: 1 });
-              console.log("Found image at index:", index);
             } else if (typeof op.insert === "string") {
               index += op.insert.length;
             } else {
@@ -96,10 +90,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           });
         }
 
-        console.log("Opening image resizer...");
         setShowImageResizer(true);
-      } else {
-        console.log("Click was not on an image");
       }
     },
     [quillRef]
@@ -158,8 +149,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   // Default image upload function
   const defaultImageUpload = async (files: File[]): Promise<string[]> => {
-    console.log("Starting image upload for files:", files);
-
     if (!files || files.length === 0) {
       throw new Error("No files to upload");
     }
@@ -586,11 +575,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 size="sm"
                 className="flex items-center gap-2"
                 onClick={() => {
-                  console.log("Test Resizer button clicked");
                   // Test with a sample image URL
                   setSelectedImageUrl("https://via.placeholder.com/600x400");
                   setShowImageResizer(true);
-                  console.log("Set showImageResizer to true");
                 }}
               >
                 🔧 Test Resizer
@@ -720,32 +707,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       `}</style>
 
       {/* Image Resizer Modal */}
-      {(() => {
-        console.log(
-          "Rendering check - showImageResizer:",
-          showImageResizer,
-          "selectedImageUrl:",
-          selectedImageUrl
-        );
-        return null;
-      })()}
       {showImageResizer && selectedImageUrl && (
-        <>
-          {(() => {
-            console.log("Rendering ImageResizer component!");
-            return null;
-          })()}
-          <ImageResizer
-            imageUrl={selectedImageUrl}
-            onImageUpdated={handleImageUpdated}
-            onClose={() => {
-              console.log("ImageResizer close clicked");
-              setShowImageResizer(false);
-              setSelectedImageUrl("");
-              setSelectedImageRange(null);
-            }}
-          />
-        </>
+        <ImageResizer
+          imageUrl={selectedImageUrl}
+          onImageUpdated={handleImageUpdated}
+          onClose={() => {
+            setShowImageResizer(false);
+            setSelectedImageUrl("");
+            setSelectedImageRange(null);
+          }}
+        />
       )}
     </div>
   );
