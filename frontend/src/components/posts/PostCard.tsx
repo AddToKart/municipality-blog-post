@@ -51,9 +51,8 @@ export function PostCard({ post, onClick, showExcerpt = true }: PostCardProps) {
   return (
     <Card
       className={cn(
-        "group cursor-pointer overflow-hidden transition-all duration-300",
-        "hover:shadow-xl hover:shadow-primary/5 hover:scale-[1.02] hover:border-primary/50",
-        "relative"
+        "group relative flex h-full flex-col overflow-hidden transition-all duration-300 animate-in fade-in slide-in-from-bottom",
+        "hover:shadow-xl hover:shadow-primary/5 hover:scale-[1.03] hover:border-primary/50 hover:animate-card-bounce"
       )}
       onClick={handleClick}
     >
@@ -74,7 +73,7 @@ export function PostCard({ post, onClick, showExcerpt = true }: PostCardProps) {
                 post.category === "announcement" ? "destructive" : "default"
               }
               className={cn(
-                "capitalize backdrop-blur-sm font-semibold shadow-lg",
+                "capitalize backdrop-blur-sm font-semibold shadow-lg transition-transform duration-300 group-hover:scale-110",
                 post.category === "announcement" && "animate-pulse"
               )}
             >
@@ -84,9 +83,9 @@ export function PostCard({ post, onClick, showExcerpt = true }: PostCardProps) {
             {isNew && (
               <Badge
                 variant="secondary"
-                className="backdrop-blur-sm bg-emerald-500 text-white border-0"
+                className="backdrop-blur-sm bg-emerald-500 text-white border-0 animate-in fade-in slide-in-from-left duration-500"
               >
-                <Sparkles className="w-3 h-3 mr-1" />
+                <Sparkles className="w-3 h-3 mr-1 animate-bounce" />
                 New
               </Badge>
             )}
@@ -95,13 +94,13 @@ export function PostCard({ post, onClick, showExcerpt = true }: PostCardProps) {
           {/* Status Badges */}
           <div className="absolute top-4 right-4 z-20 flex gap-2">
             {post.category === "announcement" && (
-              <Badge className="backdrop-blur-sm bg-background/90 text-destructive border-destructive/20">
+              <Badge className="backdrop-blur-sm bg-background/90 text-destructive border-destructive/20 animate-pulse">
                 Important
               </Badge>
             )}
             {isHot && (
-              <Badge className="backdrop-blur-sm bg-orange-500 text-white border-0">
-                <TrendingUp className="w-3 h-3 mr-1" />
+              <Badge className="backdrop-blur-sm bg-orange-500 text-white border-0 animate-in fade-in slide-in-from-right duration-500">
+                <TrendingUp className="w-3 h-3 mr-1 animate-bounce" />
                 Hot
               </Badge>
             )}
@@ -109,17 +108,17 @@ export function PostCard({ post, onClick, showExcerpt = true }: PostCardProps) {
 
           {/* Read More Overlay */}
           <div className="absolute bottom-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+            <div className="flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-sm font-medium shadow-lg animate-in fade-in slide-in-from-bottom duration-500">
               Read More
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="w-4 h-4 animate-bounce" />
             </div>
           </div>
         </div>
       )}
 
-      <CardHeader className="space-y-3">
+      <CardHeader className="space-y-3 pb-0">
         {/* Metadata */}
-        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
           <HoverCard openDelay={200}>
             <HoverCardTrigger asChild>
               <div className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-help">
@@ -143,14 +142,14 @@ export function PostCard({ post, onClick, showExcerpt = true }: PostCardProps) {
             </HoverCardContent>
           </HoverCard>
 
-          <Separator orientation="vertical" className="h-4" />
+          <div className="hidden h-1 w-1 rounded-full bg-border sm:block" />
 
           <div className="flex items-center gap-1.5">
             <User className="w-3.5 h-3.5" />
             <span>{post.author_name || "Admin"}</span>
           </div>
 
-          <Separator orientation="vertical" className="h-4" />
+          <div className="hidden h-1 w-1 rounded-full bg-border sm:block" />
 
           <div className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5" />
@@ -164,36 +163,38 @@ export function PostCard({ post, onClick, showExcerpt = true }: PostCardProps) {
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Excerpt */}
-        {showExcerpt && (
-          <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
-            {post.excerpt || stripHtml(post.content).slice(0, 150) + "..."}
-          </p>
-        )}
+      <CardContent className="flex flex-1 flex-col gap-4 p-6 pt-4">
+        <div className="space-y-4">
+          {/* Excerpt */}
+          {showExcerpt && (
+            <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
+              {post.excerpt || stripHtml(post.content).slice(0, 150) + "..."}
+            </p>
+          )}
 
-        {/* Tags */}
-        {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {post.tags.slice(0, 3).map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="text-xs hover:bg-secondary/80 transition-colors"
-              >
-                <Tag className="w-3 h-3 mr-1" />
-                {tag}
-              </Badge>
-            ))}
-            {post.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{post.tags.length - 3}
-              </Badge>
-            )}
-          </div>
-        )}
+          {/* Tags */}
+          {post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {post.tags.slice(0, 3).map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="text-xs hover:bg-secondary/80 transition-colors"
+                >
+                  <Tag className="w-3 h-3 mr-1" />
+                  {tag}
+                </Badge>
+              ))}
+              {post.tags.length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{post.tags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
 
-        <Separator />
+        <Separator className="mt-auto" />
 
         {/* Engagement Stats */}
         <div className="flex items-center justify-between text-sm">
@@ -227,7 +228,7 @@ export function PostCard({ post, onClick, showExcerpt = true }: PostCardProps) {
 
           <HoverCard openDelay={200}>
             <HoverCardTrigger asChild>
-              <div className="flex items-center gap-2 text-xs cursor-help">
+              <div className="flex items-center gap-2 text-xs cursor-help text-muted-foreground">
                 <span className="hover:scale-110 transition-transform">
                   👍 {post.like_count}
                 </span>

@@ -121,13 +121,14 @@ export function Header({ onSearch }: HeaderProps) {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation with animation */}
           <NavigationMenu className="hidden lg:flex">
             <NavigationMenuList>
               <NavigationMenuItem>
                 <Link
                   to="/"
-                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-300 animate-in fade-in slide-in-from-top"
+                  style={{ animationDelay: "0.1s" }}
                 >
                   <Home className="mr-2 h-4 w-4" />
                   Home
@@ -137,7 +138,8 @@ export function Header({ onSearch }: HeaderProps) {
               <NavigationMenuItem>
                 <Link
                   to="/posts"
-                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-300 animate-in fade-in slide-in-from-top"
+                  style={{ animationDelay: "0.2s" }}
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   Posts
@@ -147,7 +149,8 @@ export function Header({ onSearch }: HeaderProps) {
               <NavigationMenuItem>
                 <Link
                   to="/announcements"
-                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-300 animate-in fade-in slide-in-from-top"
+                  style={{ animationDelay: "0.3s" }}
                 >
                   <Megaphone className="mr-2 h-4 w-4" />
                   Announcements
@@ -155,22 +158,29 @@ export function Header({ onSearch }: HeaderProps) {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent">
+                <NavigationMenuTrigger
+                  className="bg-transparent animate-in fade-in slide-in-from-top"
+                  style={{ animationDelay: "0.4s" }}
+                >
                   Services
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                    {services.map((service) => (
-                      <li key={service.title}>
+                    {services.map((service, idx) => (
+                      <li
+                        key={service.title}
+                        className="animate-in fade-in slide-in-from-left"
+                        style={{ animationDelay: `${0.5 + idx * 0.1}s` }}
+                      >
                         <NavigationMenuLink asChild>
                           <a
                             href={service.href}
                             className={cn(
-                              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground duration-300"
                             )}
                           >
                             <div className="flex items-center gap-2">
-                              <service.icon className="h-5 w-5 text-primary" />
+                              <service.icon className="h-5 w-5 text-primary transition-transform group-hover:scale-110 duration-300" />
                               <div className="text-sm font-medium leading-none">
                                 {service.title}
                               </div>
@@ -189,7 +199,8 @@ export function Header({ onSearch }: HeaderProps) {
               <NavigationMenuItem>
                 <a
                   href="/#about"
-                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-300 animate-in fade-in slide-in-from-top"
+                  style={{ animationDelay: "0.5s" }}
                 >
                   About
                 </a>
