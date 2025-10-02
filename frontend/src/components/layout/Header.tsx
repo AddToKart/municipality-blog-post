@@ -1,154 +1,313 @@
 import React, { useState } from "react";
-import { Search, Menu, X, Bell, MapPin, Phone, Mail } from "lucide-react";
+import {
+  Search,
+  Menu,
+  MapPin,
+  Phone,
+  Mail,
+  Building2,
+  Home,
+  FileText,
+  Megaphone,
+  Briefcase,
+  Users,
+  MessageCircle,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../ui/sheet";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "../ui/navigation-menu";
+import { cn } from "../../lib/utils";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
 }
 
 export function Header({ onSearch }: HeaderProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSearch && searchQuery.trim()) {
       onSearch(searchQuery.trim());
+      setSearchQuery("");
     }
   };
 
-  const navigation = [
-    { name: "Home", to: "/" },
-    { name: "Posts", to: "/posts" },
-    { name: "Announcements", to: "/announcements" },
-    { name: "Services", to: "/#services" },
-    { name: "About", to: "/#about" },
-    { name: "Contact", to: "/#contact" },
+  const services = [
+    {
+      title: "Community Services",
+      description: "Programs and initiatives for our community",
+      href: "/#services",
+      icon: Users,
+    },
+    {
+      title: "Online Forms",
+      description: "Download and submit required documents",
+      href: "/#forms",
+      icon: FileText,
+    },
+    {
+      title: "Business Permits",
+      description: "Apply for business licenses and permits",
+      href: "/#business",
+      icon: Briefcase,
+    },
+    {
+      title: "Contact Us",
+      description: "Get in touch with our offices",
+      href: "/#contact",
+      icon: MessageCircle,
+    },
   ];
 
   return (
-    <header className="bg-white shadow-lg">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* Top Bar */}
-      <div className="bg-blue-600 text-white py-2">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap justify-between items-center text-sm">
+      <div className="bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap justify-between items-center text-sm py-2">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1.5">
                 <MapPin size={14} />
-                <span>Santa Maria, Philippines</span>
+                <span className="hidden sm:inline">
+                  Santa Maria, Philippines
+                </span>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="hidden md:flex items-center gap-1.5">
                 <Phone size={14} />
                 <span>+63 (555) 123-4567</span>
               </div>
             </div>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center gap-1.5">
               <Mail size={14} />
-              <span>info@santamaria.gov.ph</span>
+              <span className="hidden sm:inline">info@santamaria.gov.ph</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
-            <div className="bg-blue-600 rounded-full p-3">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-bold text-sm">SM</span>
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="relative">
+              <div className="bg-primary rounded-lg p-2 group-hover:scale-105 transition-transform">
+                <Building2 className="w-6 h-6 text-primary-foreground" />
               </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Santa Maria</h1>
-              <p className="text-sm text-gray-600">Municipality</p>
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-foreground">Santa Maria</h1>
+              <p className="text-xs text-muted-foreground">
+                Municipality Portal
+              </p>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.to}
-                className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
+          <NavigationMenu className="hidden lg:flex">
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <Link
+                  to="/"
+                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <Home className="mr-2 h-4 w-4" />
+                  Home
+                </Link>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <Link
+                  to="/posts"
+                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Posts
+                </Link>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <Link
+                  to="/announcements"
+                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <Megaphone className="mr-2 h-4 w-4" />
+                  Announcements
+                </Link>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg-transparent">
+                  Services
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    {services.map((service) => (
+                      <li key={service.title}>
+                        <NavigationMenuLink asChild>
+                          <a
+                            href={service.href}
+                            className={cn(
+                              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              <service.icon className="h-5 w-5 text-primary" />
+                              <div className="text-sm font-medium leading-none">
+                                {service.title}
+                              </div>
+                            </div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              {service.description}
+                            </p>
+                          </a>
+                        </NavigationMenuLink>
+                      </li>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <a
+                  href="/#about"
+                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  About
+                </a>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
 
           {/* Search Bar */}
-          <div className="hidden md:block">
-            <form onSubmit={handleSearch} className="relative">
+          <div className="hidden md:flex items-center gap-2">
+            <form onSubmit={handleSearch} className="relative w-64">
+              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search posts and announcements..."
+                placeholder="Search posts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 pr-10"
+                className="pl-8"
               />
-              <Button
-                type="submit"
-                size="icon"
-                className="absolute right-1 top-1 h-8 w-8"
-              >
-                <Search size={16} />
-              </Button>
             </form>
           </div>
 
-          {/* Mobile menu button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </Button>
-        </div>
+          {/* Mobile Menu */}
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild className="lg:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <SheetHeader>
+                <SheetTitle>Navigation</SheetTitle>
+                <SheetDescription>
+                  Access all sections of Santa Maria Municipality Portal
+                </SheetDescription>
+              </SheetHeader>
 
-        {/* Mobile Search */}
-        <div className="md:hidden pb-4">
-          <form onSubmit={handleSearch} className="relative">
-            <Input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pr-10"
-            />
-            <Button
-              type="submit"
-              size="icon"
-              className="absolute right-1 top-1 h-8 w-8"
-            >
-              <Search size={16} />
-            </Button>
-          </form>
+              <div className="mt-8 flex flex-col gap-4">
+                {/* Mobile Search */}
+                <form onSubmit={handleSearch} className="relative">
+                  <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search posts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8"
+                  />
+                </form>
+
+                {/* Mobile Navigation Links */}
+                <nav className="flex flex-col gap-2">
+                  <Link
+                    to="/"
+                    onClick={() => setIsSheetOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                  >
+                    <Home className="h-4 w-4" />
+                    Home
+                  </Link>
+                  <Link
+                    to="/posts"
+                    onClick={() => setIsSheetOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Posts
+                  </Link>
+                  <Link
+                    to="/announcements"
+                    onClick={() => setIsSheetOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                  >
+                    <Megaphone className="h-4 w-4" />
+                    Announcements
+                  </Link>
+
+                  <div className="my-2 border-t" />
+
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-semibold mb-3">Services</p>
+                    <div className="flex flex-col gap-2">
+                      {services.map((service) => (
+                        <a
+                          key={service.title}
+                          href={service.href}
+                          onClick={() => setIsSheetOpen(false)}
+                          className="flex items-start gap-2 rounded-lg p-2 hover:bg-accent transition-colors"
+                        >
+                          <service.icon className="h-5 w-5 text-primary mt-0.5" />
+                          <div>
+                            <div className="text-sm font-medium">
+                              {service.title}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {service.description}
+                            </div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-2">
+                    <a
+                      href="/#about"
+                      onClick={() => setIsSheetOpen(false)}
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                    >
+                      About
+                    </a>
+                  </div>
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
-
-      {/* Mobile Navigation */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-gray-50 border-t">
-          <nav className="max-w-7xl mx-auto px-4 py-4 space-y-2">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.to}
-                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      )}
     </header>
   );
 }
